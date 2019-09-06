@@ -1,9 +1,9 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
-  "Description": "Exported by architect/package@1.0.42 on 2019-09-06T19:02:35.182Z",
+  "Description": "Exported by architect/package@1.0.42 on 2019-09-06T20:00:30.339Z",
   "Resources": {
-    "Timapp": {
+    "NodeRestfulApiV6": {
       "Type": "AWS::Serverless::Api",
       "Properties": {
         "StageName": "staging",
@@ -15,30 +15,6 @@
             }
           },
           "paths": {
-            "/": {
-              "get": {
-                "responses": {
-                  "200": {
-                    "description": "200 response"
-                  }
-                },
-                "x-amazon-apigateway-integration": {
-                  "uri": {
-                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetIndex.Arn}/invocations"
-                  },
-                  "responses": {
-                    "default": {
-                      "statusCode": "200",
-                      "contentHandling": "CONVERT_TO_TEXT"
-                    }
-                  },
-                  "passthroughBehavior": "when_no_match",
-                  "httpMethod": "POST",
-                  "contentHandling": "CONVERT_TO_TEXT",
-                  "type": "aws_proxy"
-                }
-              }
-            },
             "/api/cats": {
               "get": {
                 "responses": {
@@ -153,6 +129,30 @@
                 }
               }
             },
+            "/": {
+              "get": {
+                "responses": {
+                  "200": {
+                    "description": "200 response"
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "uri": {
+                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetIndex.Arn}/invocations"
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200",
+                      "contentHandling": "CONVERT_TO_TEXT"
+                    }
+                  },
+                  "passthroughBehavior": "when_no_match",
+                  "httpMethod": "POST",
+                  "contentHandling": "CONVERT_TO_TEXT",
+                  "type": "aws_proxy"
+                }
+              }
+            },
             "/{proxy+}": {
               "x-amazon-apigateway-any-method": {
                 "parameters": [
@@ -184,6 +184,47 @@
                   "type": "aws_proxy"
                 }
               }
+            },
+            "/_static/{proxy+}": {
+              "x-amazon-apigateway-any-method": {
+                "parameters": [
+                  {
+                    "name": "proxy",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ],
+                "x-amazon-apigateway-integration": {
+                  "uri": {
+                    "Fn::Sub": [
+                      "http://${bukkit}.s3.${AWS::Region}.amazonaws.com/{proxy}",
+                      {
+                        "bukkit": {
+                          "Ref": "StaticBucket"
+                        }
+                      }
+                    ]
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200"
+                    }
+                  },
+                  "requestParameters": {
+                    "integration.request.path.proxy": "method.request.path.proxy"
+                  },
+                  "passthroughBehavior": "when_no_match",
+                  "httpMethod": "ANY",
+                  "cacheNamespace": "xlr8r2",
+                  "cacheKeyParameters": [
+                    "method.request.path.proxy"
+                  ],
+                  "type": "http_proxy"
+                }
+              }
             }
           }
         },
@@ -192,52 +233,6 @@
           "*~1*"
         ],
         "MinimumCompressionSize": 0
-      }
-    },
-    "GetIndex": {
-      "Type": "AWS::Serverless::Function",
-      "Properties": {
-        "Handler": "index.handler",
-        "CodeUri": "./src/http/get-index",
-        "Runtime": "nodejs10.x",
-        "MemorySize": 1152,
-        "Timeout": 5,
-        "Environment": {
-          "Variables": {
-            "ARC_ROLE": {
-              "Ref": "Role"
-            },
-            "ARC_CLOUDFORMATION": {
-              "Ref": "AWS::StackName"
-            },
-            "ARC_APP_NAME": "timapp",
-            "NODE_ENV": "staging",
-            "SESSION_TABLE_NAME": "jwe",
-            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python"
-          }
-        },
-        "Role": {
-          "Fn::Sub": [
-            "arn:aws:iam::${AWS::AccountId}:role/${roleName}",
-            {
-              "roleName": {
-                "Ref": "Role"
-              }
-            }
-          ]
-        },
-        "Events": {
-          "GetIndexEvent": {
-            "Type": "Api",
-            "Properties": {
-              "Path": "/",
-              "Method": "GET",
-              "RestApiId": {
-                "Ref": "Timapp"
-              }
-            }
-          }
-        }
       }
     },
     "GetApiCats": {
@@ -256,10 +251,13 @@
             "ARC_CLOUDFORMATION": {
               "Ref": "AWS::StackName"
             },
-            "ARC_APP_NAME": "timapp",
+            "ARC_APP_NAME": "node-restful-api-v6",
             "NODE_ENV": "staging",
             "SESSION_TABLE_NAME": "jwe",
-            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python"
+            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python",
+            "ARC_STATIC_BUCKET": {
+              "Ref": "StaticBucket"
+            }
           }
         },
         "Role": {
@@ -279,7 +277,7 @@
               "Path": "/api/cats",
               "Method": "GET",
               "RestApiId": {
-                "Ref": "Timapp"
+                "Ref": "NodeRestfulApiV6"
               }
             }
           }
@@ -302,10 +300,13 @@
             "ARC_CLOUDFORMATION": {
               "Ref": "AWS::StackName"
             },
-            "ARC_APP_NAME": "timapp",
+            "ARC_APP_NAME": "node-restful-api-v6",
             "NODE_ENV": "staging",
             "SESSION_TABLE_NAME": "jwe",
-            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python"
+            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python",
+            "ARC_STATIC_BUCKET": {
+              "Ref": "StaticBucket"
+            }
           }
         },
         "Role": {
@@ -325,7 +326,7 @@
               "Path": "/api/cats/{catID}",
               "Method": "GET",
               "RestApiId": {
-                "Ref": "Timapp"
+                "Ref": "NodeRestfulApiV6"
               }
             }
           }
@@ -348,10 +349,13 @@
             "ARC_CLOUDFORMATION": {
               "Ref": "AWS::StackName"
             },
-            "ARC_APP_NAME": "timapp",
+            "ARC_APP_NAME": "node-restful-api-v6",
             "NODE_ENV": "staging",
             "SESSION_TABLE_NAME": "jwe",
-            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python"
+            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python",
+            "ARC_STATIC_BUCKET": {
+              "Ref": "StaticBucket"
+            }
           }
         },
         "Role": {
@@ -371,7 +375,7 @@
               "Path": "/api/cats",
               "Method": "POST",
               "RestApiId": {
-                "Ref": "Timapp"
+                "Ref": "NodeRestfulApiV6"
               }
             }
           }
@@ -394,10 +398,13 @@
             "ARC_CLOUDFORMATION": {
               "Ref": "AWS::StackName"
             },
-            "ARC_APP_NAME": "timapp",
+            "ARC_APP_NAME": "node-restful-api-v6",
             "NODE_ENV": "staging",
             "SESSION_TABLE_NAME": "jwe",
-            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python"
+            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python",
+            "ARC_STATIC_BUCKET": {
+              "Ref": "StaticBucket"
+            }
           }
         },
         "Role": {
@@ -417,7 +424,7 @@
               "Path": "/api/cats/{catID}",
               "Method": "PATCH",
               "RestApiId": {
-                "Ref": "Timapp"
+                "Ref": "NodeRestfulApiV6"
               }
             }
           }
@@ -440,10 +447,13 @@
             "ARC_CLOUDFORMATION": {
               "Ref": "AWS::StackName"
             },
-            "ARC_APP_NAME": "timapp",
+            "ARC_APP_NAME": "node-restful-api-v6",
             "NODE_ENV": "staging",
             "SESSION_TABLE_NAME": "jwe",
-            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python"
+            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python",
+            "ARC_STATIC_BUCKET": {
+              "Ref": "StaticBucket"
+            }
           }
         },
         "Role": {
@@ -463,7 +473,56 @@
               "Path": "/api/cats/{catID}",
               "Method": "DELETE",
               "RestApiId": {
-                "Ref": "Timapp"
+                "Ref": "NodeRestfulApiV6"
+              }
+            }
+          }
+        }
+      }
+    },
+    "GetIndex": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "index.handler",
+        "CodeUri": "/usr/local/lib/node_modules/@architect/architect/node_modules/@architect/package/vendor/arc-proxy-3.3.7/index.js",
+        "Runtime": "nodejs10.x",
+        "MemorySize": 1152,
+        "Timeout": 5,
+        "Environment": {
+          "Variables": {
+            "ARC_ROLE": {
+              "Ref": "Role"
+            },
+            "ARC_CLOUDFORMATION": {
+              "Ref": "AWS::StackName"
+            },
+            "ARC_APP_NAME": "node-restful-api-v6",
+            "NODE_ENV": "staging",
+            "SESSION_TABLE_NAME": "jwe",
+            "PYTHONPATH": "/var/task/vendor:/var/runtime:/opt/python",
+            "ARC_STATIC_BUCKET": {
+              "Ref": "StaticBucket"
+            }
+          }
+        },
+        "Role": {
+          "Fn::Sub": [
+            "arn:aws:iam::${AWS::AccountId}:role/${roleName}",
+            {
+              "roleName": {
+                "Ref": "Role"
+              }
+            }
+          ]
+        },
+        "Events": {
+          "GetIndexEvent": {
+            "Type": "Api",
+            "Properties": {
+              "Path": "/",
+              "Method": "GET",
+              "RestApiId": {
+                "Ref": "NodeRestfulApiV6"
               }
             }
           }
@@ -483,10 +542,20 @@
             "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/*",
             {
               "restApiId": {
-                "Ref": "Timapp"
+                "Ref": "NodeRestfulApiV6"
               }
             }
           ]
+        }
+      }
+    },
+    "StaticBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "PublicRead",
+        "WebsiteConfiguration": {
+          "IndexDocument": "index.html",
+          "ErrorDocument": "404.html"
         }
       }
     },
@@ -549,6 +618,31 @@
                     "logs:DescribeLogStreams"
                   ],
                   "Resource": "arn:aws:logs:*:*:*"
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "ArcStaticBucketPolicy",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": [
+                      "arn:aws:s3:::${bukkit}",
+                      {
+                        "bukkit": {
+                          "Ref": "StaticBucket"
+                        }
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -659,6 +753,38 @@
         }
       }
     },
+    "StaticBucketParam": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Type": "String",
+        "Name": {
+          "Fn::Sub": [
+            "/${AWS::StackName}/static/${key}",
+            {
+              "key": "bucket"
+            }
+          ]
+        },
+        "Value": {
+          "Ref": "StaticBucket"
+        }
+      }
+    },
+    "StaticFingerprintParam": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Type": "String",
+        "Name": {
+          "Fn::Sub": [
+            "/${AWS::StackName}/static/${key}",
+            {
+              "key": "fingerprint"
+            }
+          ]
+        },
+        "Value": "false"
+      }
+    },
     "ParameterStorePolicy": {
       "Type": "AWS::IAM::Policy",
       "DependsOn": "Role",
@@ -694,7 +820,7 @@
           "https://${restApiId}.execute-api.${AWS::Region}.amazonaws.com/staging",
           {
             "restApiId": {
-              "Ref": "Timapp"
+              "Ref": "NodeRestfulApiV6"
             }
           }
         ]
@@ -703,7 +829,20 @@
     "restApiId": {
       "Description": "HTTP restApiId",
       "Value": {
-        "Ref": "Timapp"
+        "Ref": "NodeRestfulApiV6"
+      }
+    },
+    "BucketURL": {
+      "Description": "Bucket URL",
+      "Value": {
+        "Fn::Sub": [
+          "http://${bukkit}.s3-website-${AWS::Region}.amazonaws.com",
+          {
+            "bukkit": {
+              "Ref": "StaticBucket"
+            }
+          }
+        ]
       }
     }
   }

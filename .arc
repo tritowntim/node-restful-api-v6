@@ -4,11 +4,12 @@
 # This is a generated file and will be overwritten
 #
 @app
-begin-app
+node-restful-api-v6
 
 @aws
-bucket cf-sam-deployments-east
+bucket node-restful-api-v6
 
+@cdn
 @static
 @http
 get /api/cats
